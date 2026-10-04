@@ -13,6 +13,16 @@ interface Props {
   fallback?: string;
 }
 
+/**
+ * Where a cell sits, as the percentage CSS wants.
+ *
+ * A single-cell axis has nowhere to travel, and the formula would divide by
+ * zero, so it stays at the origin.
+ */
+function gridPercent(index: number, count: number): number {
+  return count <= 1 ? 0 : (index / (count - 1)) * 100;
+}
+
 /** One shared fetch for the whole app; the map is small and never changes. */
 let cache: Map<number, SpriteCell> | null = null;
 const listeners = new Set<() => void>();
@@ -62,11 +72,15 @@ export function ItemIcon({ iconId, size = '2.1em', fallback = '' }: Props) {
           className="block h-full w-full"
           style={{
             backgroundImage: `url(${cell.url})`,
-            // Positions and sheet size are expressed as a multiple of the
-            // rendered box, so the sheet scales with the icon rather than
-            // assuming the 40px it was packed at.
-            backgroundSize: `${(cell.sheetWidth / cell.size) * 100}% ${(cell.sheetHeight / cell.size) * 100}%`,
-            backgroundPosition: `${(cell.x / cell.size) * 100}% ${(cell.y / cell.size) * 100}%`,
+            // Sized as a multiple of the rendered box so the sheet scales with
+            // the icon rather than assuming the 40px it was packed at.
+            backgroundSize: `${cell.cols * 100}% ${cell.rows * 100}%`,
+            // A percentage background-position aligns that point of the image
+            // with the same point of the box; it does not shift by that much.
+            // Reaching cell i therefore needs i/(count-1), not -i*100%, which
+            // is right only for the first cell and wrong — and backwards — for
+            // every other.
+            backgroundPosition: `${gridPercent(cell.col, cell.cols)}% ${gridPercent(cell.row, cell.rows)}%`,
             backgroundRepeat: 'no-repeat',
           }}
         />

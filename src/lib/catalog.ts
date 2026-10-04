@@ -190,13 +190,12 @@ export async function searchSlot(
 
 export interface SpriteCell {
   url: string;
-  /** Cell offset within the sheet, in px at the packed size. */
-  x: number;
-  y: number;
-  sheetWidth: number;
-  sheetHeight: number;
-  /** One icon's edge in px, as packed. */
-  size: number;
+  /** Grid position of the cell, not a pixel offset. */
+  col: number;
+  row: number;
+  /** Grid dimensions of the sheet this cell belongs to. */
+  cols: number;
+  rows: number;
 }
 
 interface SpriteManifest {
@@ -222,7 +221,7 @@ export function loadSprites(): Promise<Map<number, SpriteCell>> {
       if (!r.ok) throw new Error(`sprite manifest ${r.status}`);
       return r.json() as Promise<SpriteManifest>;
     })
-    .then(({ size, cols, sheets }) => {
+    .then(({ cols, sheets }) => {
       const cells = new Map<number, SpriteCell>();
       for (const sheet of sheets) {
         const rows = Math.ceil(sheet.icons.length / cols);
@@ -230,11 +229,10 @@ export function loadSprites(): Promise<Map<number, SpriteCell>> {
           if (!iconId) return; // a gap left by a missing source icon
           cells.set(iconId, {
             url: `/sprites/${sheet.file}`,
-            x: -(index % cols) * size,
-            y: -Math.floor(index / cols) * size,
-            sheetWidth: cols * size,
-            sheetHeight: rows * size,
-            size,
+            col: index % cols,
+            row: Math.floor(index / cols),
+            cols,
+            rows,
           });
         });
       }
