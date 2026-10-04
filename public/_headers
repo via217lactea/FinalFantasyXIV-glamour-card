@@ -1,0 +1,8 @@
+# Sprite sheets and catalog data are content-addressed by patch, not by hash, so
+# they are revalidated rather than cached forever. The hashed build assets under
+# /assets/ get Vite's own immutable headers from Cloudflare automatically.
+/sprites/*
+  Cache-Control: public, max-age=604800
+
+/data/*
+  Cache-Control: public, max-age=86400

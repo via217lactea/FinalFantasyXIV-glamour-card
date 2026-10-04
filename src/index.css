@@ -1,0 +1,154 @@
+@import 'tailwindcss';
+
+/* Role-based tokens, so one class works in both themes and only the variables
+   under [data-theme] change.
+   @theme is what registers the names with Tailwind and generates the utilities;
+   the aliases it emits at :root are re-declared below. */
+@theme {
+  --color-surface: var(--c-surface);
+  --color-surface-raised: var(--c-surface-raised);
+  --color-surface-sunken: var(--c-surface-sunken);
+  --color-rule: var(--c-rule);
+  --color-rule-strong: var(--c-rule-strong);
+  --color-fg: var(--c-fg);
+  --color-fg-dim: var(--c-fg-dim);
+  --color-fg-faint: var(--c-fg-faint);
+
+  /* Provenance and licences for these live in src/lib/fonts.ts. Every face is
+     SIL OFL, which the PNG export requires: it inlines font data rather than
+     linking it, so a webfont-link-only licence would not do. */
+  --font-display: 'Gowun Batang', serif;
+  /* Latin-only. Gowun Batang follows it so a hangul title falls back to a
+     matching serif rather than to whatever the system offers. */
+  --font-masthead: 'Bodoni Moda', 'Gowun Batang', serif;
+  /* Title and signature. IBM Plex splits by script, so all three families are
+     stacked; the KR and JP faces sit on different baselines, which is why this
+     is not the body face — but a title is one language at a time, so the two
+     never meet on a line here. */
+  --font-title: 'IBM Plex Sans', 'IBM Plex Sans KR', 'IBM Plex Sans JP', sans-serif;
+  --font-sans: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* Light — off-white studio paper. Not pure #fff, which glares on a large
+   bright surface, but close enough to read as white. The default. */
+:root,
+[data-theme='light'] {
+  --c-surface: #fbfaf9;
+  --c-surface-raised: #ffffff;
+  --c-surface-sunken: #f1efec;
+  --c-rule: #e2ded9;
+  --c-rule-strong: #c2bcb4;
+  --c-fg: #23211f;
+  --c-fg-dim: #6d6862;
+  --c-fg-faint: #a09a93;
+  --c-scrim: rgb(35 33 31 / 0.4);
+  --c-swatch-edge: rgb(35 33 31 / 0.3);
+  --fallback-accent: #8a5a3c;
+  --c-grain: 0.018;
+  color-scheme: light;
+}
+
+/* Dark — a soft near-black rather than true black, so white type does not
+   halo against it. */
+[data-theme='dark'] {
+  --c-surface: #1c1b1a;
+  --c-surface-raised: #232221;
+  --c-surface-sunken: #141313;
+  --c-rule: #35332f;
+  --c-rule-strong: #514d47;
+  --c-fg: #f0eeea;
+  --c-fg-dim: #b3ada5;
+  --c-fg-faint: #837d75;
+  --c-scrim: rgb(20 19 19 / 0.84);
+  --c-swatch-edge: rgb(0 0 0 / 0.45);
+  --fallback-accent: #c9a961;
+  --c-grain: 0.022;
+  color-scheme: dark;
+}
+
+/**
+ * The palette aliases have to be re-declared wherever a theme is set.
+ *
+ * A custom property whose value is a var() is resolved where it is *declared*,
+ * not where it is used, and the resolved value is what inherits. Declaring
+ * --color-surface: var(--c-surface) only at :root therefore bakes in the root's
+ * palette: a card that sets data-theme on itself changes --c-surface for its
+ * subtree, but --color-surface has already been fixed and never looks again.
+ * Repeating the aliases here makes every themed element resolve its own.
+ */
+:root,
+[data-theme] {
+  --color-surface: var(--c-surface);
+  --color-surface-raised: var(--c-surface-raised);
+  --color-surface-sunken: var(--c-surface-sunken);
+  --color-rule: var(--c-rule);
+  --color-rule-strong: var(--c-rule-strong);
+  --color-fg: var(--c-fg);
+  --color-fg-dim: var(--c-fg-dim);
+  --color-fg-faint: var(--c-fg-faint);
+}
+
+:root {
+  /* Replaced at runtime by the dyes in play — see useAccent(). */
+  --accent: var(--fallback-accent);
+}
+
+/* Paper fibre. Inlined as a data URI so it survives the PNG export, which
+   cannot reach out for external assets. */
+/**
+ * Paper fibre, as a single faint overlay.
+ *
+ * The texture lives only on the pseudo-element, never on the element itself: a
+ * background-image on .paper paints the noise at full strength with no way to
+ * dim it, and the overlay then stacks a second copy on top. Inlined as a data
+ * URI so it survives the PNG export, which cannot fetch external assets.
+ */
+.paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 140px 140px;
+  opacity: var(--c-grain);
+  mix-blend-mode: multiply;
+}
+
+/* Multiply darkens, so on a dark ground the same overlay reads as heavy soot.
+   Screening it back keeps the grain as a lift rather than a smear. */
+[data-theme='dark'] .paper::before {
+  mix-blend-mode: screen;
+}
+
+/* A scribe's double rule under a heading. */
+.rule-double {
+  border-bottom: 1px solid var(--c-rule-strong);
+  box-shadow: 0 3px 0 -2px var(--c-rule);
+}
+
+html {
+  background: var(--c-surface-sunken);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--c-fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

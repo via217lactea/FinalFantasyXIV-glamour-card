@@ -1,0 +1,58 @@
+name: Refresh game data
+
+on:
+  schedule:
+    - cron: '0 18 * * 1'   # Monday 03:00 KST
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Rebuild the catalog
+        run: npm run build:data
+
+      # A patch adds items, and new items arrive without icons. This finds them
+      # without needing a game client on the runner.
+      - name: Record patch versions
+        run: npm run build:versions
+        continue-on-error: true
+
+      - name: Check icon coverage
+        id: icons
+        run: npm run check:icons
+        continue-on-error: true
+
+      # Only the newly added icons, and only up to the built-in cap. If a patch
+      # adds more than that, the run reports it and a local extraction is due.
+      - name: Fill new icons from the Lodestone
+        if: steps.icons.outcome == 'failure'
+        run: npm run fill:icons
+        continue-on-error: true
+
+      # New icons mean the sheets are stale. Only possible when the fill step
+      # actually produced files; a runner has no game client to extract from.
+      - name: Repack sprite sheets
+        if: steps.icons.outcome == 'failure'
+        run: npm run build:sprites
+        continue-on-error: true
+
+      - name: Open a PR if anything changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore(data): refresh catalog and icons'
+          branch: data/refresh
+          title: 'chore(data): refresh catalog and icons'
+          body: |
+            Regenerated from the upstream datamining repositories.
+            New icons, if any, were pulled for the added items only.
+          add-paths: |
+            public/data
+            public/sprites

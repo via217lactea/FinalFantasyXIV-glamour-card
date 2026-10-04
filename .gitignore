@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.cache/
+dist-preview/
+# Extracted from the game client and packed into public/sprites; the raw files
+# would be ~19,300 assets — 97% of Cloudflare Pages' free file limit.
+icons/

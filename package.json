@@ -1,0 +1,49 @@
+{
+  "name": "ff14-glamour-card",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build:data": "tsx scripts/build-data.ts",
+    "build:icons": "tsx scripts/collect-icons.ts",
+    "fill:icons": "tsx scripts/fill-icons-lodestone.ts",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check:icons": "tsx scripts/check-icons.ts",
+    "build:versions": "tsx scripts/fetch-versions.ts",
+    "build:preview": "node preview/build.mjs",
+    "check:fonts": "tsx scripts/check-fonts.ts",
+    "check:capacity": "tsx scripts/check-capacity.ts",
+    "check:export": "tsx scripts/check-export.ts",
+    "check:share": "tsx scripts/check-share.ts",
+    "icons:plan": "tsx scripts/plan-icons.ts",
+    "check:theme": "vite build --logLevel silent && node scripts/check-theme.mjs",
+    "build:sprites": "tsx scripts/build-sprites.ts",
+    "check:deploy": "vite build --logLevel silent && node scripts/check-deploy.mjs",
+    "check:sprites": "tsx scripts/check-sprites.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "csv-parse": "^7.0.2",
+    "html-to-image": "^1.11.13",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0"
+  },
+  "type": "module",
+  "private": true
+}
