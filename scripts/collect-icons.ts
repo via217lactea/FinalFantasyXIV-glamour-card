@@ -25,10 +25,34 @@ const ICON_FILE = /^(\d{6})(_hr1)?$/;
 
 interface Candidate {
   path: string;
-  hr: boolean;
+  /** Higher wins. See rank(). */
+  score: number;
 }
 
-async function walk(dir: string, found: Map<number, Candidate>, depth = 0): Promise<void> {
+/**
+ * How much a file is wanted when several carry the same icon id.
+ *
+ * An extraction holds more than one picture per id: the plain icon sits in the
+ * numbered folder, while `hq/` holds the high-quality variant and the language
+ * folders hold localised ones. Only the plain icon is the item's ordinary art,
+ * so a nested file must never beat it — and since a directory walk reaches the
+ * subfolders first, "first one found" quietly picked the wrong picture.
+ *
+ * Within the right folder the `_hr1` variant is preferred: exports run at two
+ * or three times size, where 40px art visibly softens.
+ */
+function rank(relativeDir: string, hr: boolean): number {
+  const nested = relativeDir.length > 0;
+  return (nested ? 0 : 2) + (hr ? 1 : 0);
+}
+
+async function walk(
+  dir: string,
+  found: Map<number, Candidate>,
+  depth = 0,
+  /** Folders entered below the numbered one, e.g. "hq" or "en". */
+  nesting = '',
+): Promise<void> {
   if (depth > 6) return;
   let entries;
   try {
@@ -40,7 +64,10 @@ async function walk(dir: string, found: Map<number, Candidate>, depth = 0): Prom
   for (const entry of entries) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
-      await walk(full, found, depth + 1);
+      // A folder whose name is six digits is the icon bucket itself; anything
+      // inside that is a variant folder and gets marked as nested.
+      const isBucket = /^\d{6}$/.test(entry.name);
+      await walk(full, found, depth + 1, isBucket ? '' : join(nesting, entry.name));
       continue;
     }
     if (extname(entry.name).toLowerCase() !== '.png') continue;
@@ -49,11 +76,9 @@ async function walk(dir: string, found: Map<number, Candidate>, depth = 0): Prom
     if (!match) continue;
 
     const id = Number(match[1]);
-    const hr = Boolean(match[2]);
+    const score = rank(nesting, Boolean(match[2]));
     const existing = found.get(id);
-    // Prefer the high-res variant: exports run at pixel ratio 3, and 40px
-    // source art visibly softens at that scale.
-    if (!existing || (hr && !existing.hr)) found.set(id, { path: full, hr });
+    if (!existing || score > existing.score) found.set(id, { path: full, score });
   }
 }
 
@@ -101,6 +126,7 @@ async function main() {
   console.log('▸ copying…');
   let copied = 0;
   let hrCount = 0;
+  let nested = 0;
   const missing: number[] = [];
 
   for (const id of needed.keys()) {
@@ -113,10 +139,15 @@ async function main() {
     await mkdir(join(dest, '..'), { recursive: true });
     await copyFile(candidate.path, dest);
     copied++;
-    if (candidate.hr) hrCount++;
+    if (candidate.score % 2 === 1) hrCount++;
+    if (candidate.score < 2) nested++;
   }
 
-  console.log(`  copied ${copied} (${hrCount} high-res)`);
+  console.log(
+    `  copied ${copied} (${hrCount} high-res` +
+      (nested ? `, ${nested} only available in a variant folder` : '') +
+      ')',
+  );
 
   if (missing.length) {
     missing.sort((a, b) => a - b);

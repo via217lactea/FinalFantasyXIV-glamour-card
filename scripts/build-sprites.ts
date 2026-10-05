@@ -119,9 +119,12 @@ async function main() {
         },
       })
         .composite(composites)
-        // A palette roughly halves these; icons have few enough colours that
-        // the loss is invisible at 40px.
-        .png({ palette: true, quality: 90, effort: 7 })
+        // Full colour, deliberately. A palette halves the file, but it caps the
+        // whole sheet at 256 colours — about four per icon across sixty-four —
+        // and detailed art comes out posterised into something that no longer
+        // reads as the item it depicts. The sheets are small enough that the
+        // saving was never worth an icon people cannot recognise.
+        .png({ compressionLevel: 9 })
         .toFile(join(SPRITE_DIR, file));
 
       sheets.push({ file, icons: cells });

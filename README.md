@@ -98,8 +98,9 @@ npm run build:sprites                     # public/icons → public/sprites (배
 ### 스프라이트
 
 ```bash
-npm run build:sprites   # icons/ → public/sprites/
-npm run check:sprites   # 매니페스트·시트 일치와 배포 파일 수 검증
+npm run build:sprites           # icons/ → public/sprites/
+npm run check:sprites           # 매니페스트·시트 일치와 칸 좌표 계산 검증
+npm run debug:icon -- "아이템명"  # 한 아이템의 아이콘을 원본·시트 양쪽에서 추출
 ```
 
 아이콘은 개별 파일이 아니라 **스프라이트 시트로 배포한다.** Cloudflare Pages 무료 플랜의
@@ -119,6 +120,15 @@ npm run check:sprites   # 매니페스트·시트 일치와 배포 파일 수 �
 
 **시트 안 배치 순서를 검색 정렬과 똑같이 맞춘다.** 아이템 레벨 내림차순이라 검색 결과 첫
 페이지가 시트 한두 장에 몰린다. 이 점에서는 개별 파일보다 오히려 낫다.
+
+시트는 **팔레트 압축을 쓰지 않는다.** 용량은 절반이 되지만 64개 아이콘이 256색을 나눠
+쓰게 되어(아이콘당 네 색꼴) 그라데이션이 뭉개진다. 측정해 보면 채널당 평균 오차 8.6,
+최대 73이다. 시트가 작아서 그 절약이 알아볼 수 없는 아이콘보다 가치 있지 않다.
+
+**칸 위치는 `i/(개수-1)` 퍼센트로 잡는다.** CSS의 퍼센트 `background-position`은 "그만큼
+밀어낸다"가 아니라 **이미지의 그 지점과 컨테이너의 그 지점을 맞춘다**는 뜻이다. `-i*100%`로
+쓰면 첫 칸만 우연히 맞고 나머지는 반대 방향으로 어긋나, "첫 아이템만 아이콘이 나온다"로
+드러난다. `check:sprites`가 이 계산을 검증한다.
 
 **아이콘 원본(`icons/`)은 `public/` 바깥에 둔다.** `public/` 아래 있는 것은 정의상 전부
 빌드에 복사되므로, 원본이 거기 있으면 배포 파일 수가 그대로 돌아온다. `icons/`는 git에서

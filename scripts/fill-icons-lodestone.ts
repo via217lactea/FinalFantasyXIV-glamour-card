@@ -90,31 +90,46 @@ async function main() {
   }
 
   const { missing } = JSON.parse(await readFile(manifestPath, 'utf8')) as { missing: number[] };
-  console.log(`▸ ${missing.length} icons to fill`);
 
-  if (missing.length > cap) {
+  // Icons that exist but show the wrong picture, from audit:icons.
+  const auditPath = join(DATA_DIR, 'icon-audit.json');
+  const wrong: number[] = await readFile(auditPath, 'utf8')
+    .then((text) => (JSON.parse(text) as { wrong?: { iconId: number }[] }).wrong ?? [])
+    .then((entries) => entries.map((entry) => entry.iconId))
+    .catch(() => []);
+
+  const replace = new Set(wrong);
+  const targets = [...new Set([...missing, ...wrong])];
+  console.log(
+    `▸ ${targets.length} icons to fetch` +
+      (wrong.length ? ` (${missing.length} missing, ${wrong.length} wrong)` : ''),
+  );
+
+  if (targets.length > cap) {
     console.error(
-      `\nRefusing to fetch ${missing.length} icons (cap ${cap}).\n` +
+      `\nRefusing to fetch ${targets.length} icons (cap ${cap}).\n` +
         `That many gaps means the extraction itself is incomplete — re-run it against a\n` +
         `global client rather than pulling this volume off the Lodestone. To override:\n` +
-        `  npm run fill:icons -- --cap ${missing.length}\n`,
+        `  npm run fill:icons -- --cap ${targets.length}\n`,
     );
     process.exit(1);
   }
 
   console.log('▸ loading id map…');
   const idMap = await loadIdMap();
-  const usage = await itemsByIcon(new Set(missing));
+  const usage = await itemsByIcon(new Set(targets));
 
   let filled = 0;
   let noMapping = 0;
   const failed: number[] = [];
 
-  for (const iconId of missing) {
+  for (const iconId of targets) {
     const dest = iconOutputPath(iconId);
-    if (await exists(dest)) {
+    // A gap is skipped once it is on disk, which makes the run resumable. A
+    // wrong icon is already on disk by definition, so it is fetched anyway.
+    if (!replace.has(iconId) && (await exists(dest))) {
       filled++;
-      continue; // resumable
+      continue;
     }
 
     // Any item using this icon will do; try a few in case one has no page.
@@ -155,7 +170,7 @@ async function main() {
 
     if (got) {
       filled++;
-      if (filled % 25 === 0) console.log(`  ${filled}/${missing.length}`);
+      if (filled % 25 === 0) console.log(`  ${filled}/${targets.length}`);
     } else {
       failed.push(iconId);
     }

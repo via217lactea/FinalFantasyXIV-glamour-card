@@ -109,6 +109,32 @@ async function main() {
   // one it touches, so a fat sheet is felt twice.
   note(biggest < 400, 'the largest sheet stays under 400 KB');
 
+  console.log('\n  cell positioning');
+  // A percentage background-position aligns that point of the image with the
+  // same point of the box rather than shifting by it, so reaching cell i takes
+  // i/(count-1). The wrong formula, -i*100%, happens to be right for the first
+  // cell and backwards for every other — which looks like "only the first icon
+  // renders" and is invisible to anything that does not do layout.
+  const gridPercent = (index: number, count: number) =>
+    count <= 1 ? 0 : (index / (count - 1)) * 100;
+
+  const BOX = 100;
+  let misplaced = 0;
+  for (const cols of [manifest.cols]) {
+    for (const rows of [1, 2, 8]) {
+      for (let col = 0; col < cols; col++) {
+        for (let row = 0; row < rows; row++) {
+          // What the browser computes from a percentage position.
+          const offsetX = (BOX - cols * BOX) * (gridPercent(col, cols) / 100);
+          const offsetY = (BOX - rows * BOX) * (gridPercent(row, rows) / 100);
+          if (Math.abs(offsetX - -col * BOX) > 0.01) misplaced++;
+          if (rows > 1 && Math.abs(offsetY - -row * BOX) > 0.01) misplaced++;
+        }
+      }
+    }
+  }
+  note(misplaced === 0, `every cell of a ${manifest.cols}-wide grid lands on its icon`);
+
   if (failures) {
     console.error(`\n  ${failures} problem(s) with the sprites.`);
     process.exit(1);

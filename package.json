@@ -20,7 +20,9 @@
     "check:theme": "vite build --logLevel silent && node scripts/check-theme.mjs",
     "build:sprites": "tsx scripts/build-sprites.ts",
     "check:deploy": "vite build --logLevel silent && node scripts/check-deploy.mjs",
-    "check:sprites": "tsx scripts/check-sprites.ts"
+    "check:sprites": "tsx scripts/check-sprites.ts",
+    "debug:icon": "tsx scripts/debug-icon.ts",
+    "audit:icons": "tsx scripts/audit-icons.ts"
   },
   "keywords": [],
   "author": "",
