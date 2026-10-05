@@ -199,6 +199,8 @@ export interface SpriteCell {
 }
 
 interface SpriteManifest {
+  /** Changes on every sprite rebuild; appended to sheet URLs. */
+  version?: string;
   size: number;
   cols: number;
   sheets: { file: string; icons: number[] }[];
@@ -221,14 +223,17 @@ export function loadSprites(): Promise<Map<number, SpriteCell>> {
       if (!r.ok) throw new Error(`sprite manifest ${r.status}`);
       return r.json() as Promise<SpriteManifest>;
     })
-    .then(({ cols, sheets }) => {
+    .then(({ cols, sheets, version }) => {
+      // Sheet names are stable across rebuilds, so without this a corrected
+      // icon would sit behind whatever copy a visitor already cached.
+      const bust = version ? `?v=${version}` : '';
       const cells = new Map<number, SpriteCell>();
       for (const sheet of sheets) {
         const rows = Math.ceil(sheet.icons.length / cols);
         sheet.icons.forEach((iconId, index) => {
           if (!iconId) return; // a gap left by a missing source icon
           cells.set(iconId, {
-            url: `/sprites/${sheet.file}`,
+            url: `/sprites/${sheet.file}${bust}`,
             col: index % cols,
             row: Math.floor(index / cols),
             cols,

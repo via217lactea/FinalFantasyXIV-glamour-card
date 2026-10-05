@@ -49,6 +49,7 @@ async function main() {
   }
 
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as {
+    version?: string;
     size: number;
     cols: number;
     sheets: { file: string; icons: number[] }[];
@@ -108,6 +109,18 @@ async function main() {
   // A card can reference a dozen sheets at once, and the exporter inlines each
   // one it touches, so a fat sheet is felt twice.
   note(biggest < 400, 'the largest sheet stays under 400 KB');
+
+  console.log('\n  cache busting');
+  // Sheet names stay the same across rebuilds, so a corrected icon would sit
+  // behind whatever copy a visitor already had. The stamp in the manifest is
+  // what makes the URL change, and the headers are what make it worth caching.
+  note(Boolean(manifest.version), `build stamp ${manifest.version ?? '(missing)'}`);
+  const headers = await readFile(join(process.cwd(), 'public', '_headers'), 'utf8').catch(() => '');
+  note(/\/sprites\/\*[^/]*immutable/s.test(headers), 'sheets are cached hard');
+  note(
+    /\/data\/sprites\.json[^/]*(?:must-revalidate|max-age=0)/s.test(headers),
+    'the manifest itself is not',
+  );
 
   console.log('\n  cell positioning');
   // A percentage background-position aligns that point of the image with the

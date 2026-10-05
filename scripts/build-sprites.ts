@@ -132,9 +132,19 @@ async function main() {
     }
   }
 
+  // A build stamp that changes whenever the sheets do. The app appends it to
+  // every sheet URL, which is what lets the sheets be cached hard: a rebuild
+  // produces new URLs rather than waiting out someone's cached copy.
+  const version = Date.now().toString(36);
   await writeFile(
     join(DATA_DIR, 'sprites.json'),
-    JSON.stringify({ generatedAt: new Date().toISOString(), size: ICON_PX, cols: COLS, sheets }),
+    JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      version,
+      size: ICON_PX,
+      cols: COLS,
+      sheets,
+    }),
     'utf8',
   );
 
