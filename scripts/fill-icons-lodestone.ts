@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, access } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 /**
@@ -82,14 +82,36 @@ async function main() {
   const capFlag = process.argv.indexOf('--cap');
   const cap = capFlag >= 0 ? Number(process.argv[capFlag + 1]) : DEFAULT_CAP;
 
+  const rangeFlag = process.argv.indexOf('--range');
+  const range =
+    rangeFlag >= 0
+      ? { from: Number(process.argv[rangeFlag + 1]), to: Number(process.argv[rangeFlag + 2]) }
+      : null;
+
   const manifestPath = join(DATA_DIR, 'missing-icons.json');
-  if (!(await exists(manifestPath))) {
+  const missing: number[] = await readFile(manifestPath, 'utf8')
+    .then((text) => (JSON.parse(text) as { missing: number[] }).missing)
+    .catch(() => []);
+
+  if (!missing.length && !range) {
     console.log('No missing-icons.json — run `npm run build:icons` first.');
     console.log('If it produced full coverage, there is nothing to fill.');
     return;
   }
 
-  const { missing } = JSON.parse(await readFile(manifestPath, 'utf8')) as { missing: number[] };
+  // Every catalogue icon inside an explicitly distrusted range.
+  const inRange: number[] = [];
+  if (range) {
+    for (const file of await readdir(join(DATA_DIR, 'items'))) {
+      if (!file.endsWith('.json')) continue;
+      const { items } = JSON.parse(await readFile(join(DATA_DIR, 'items', file), 'utf8')) as {
+        items: [number, number, ...unknown[]][];
+      };
+      for (const [, icon] of items) {
+        if (icon >= range.from && icon <= range.to) inRange.push(icon);
+      }
+    }
+  }
 
   // Icons that exist but show the wrong picture, from audit:icons.
   const auditPath = join(DATA_DIR, 'icon-audit.json');
@@ -98,12 +120,15 @@ async function main() {
     .then((entries) => entries.map((entry) => entry.iconId))
     .catch(() => []);
 
-  const replace = new Set(wrong);
-  const targets = [...new Set([...missing, ...wrong])];
-  console.log(
-    `▸ ${targets.length} icons to fetch` +
-      (wrong.length ? ` (${missing.length} missing, ${wrong.length} wrong)` : ''),
-  );
+  // Anything already on disk has to be overwritten rather than skipped.
+  const replace = new Set([...wrong, ...inRange]);
+  const targets = [...new Set([...missing, ...wrong, ...inRange])];
+
+  const parts = [`${missing.length} missing`];
+  if (wrong.length) parts.push(`${wrong.length} wrong`);
+  if (inRange.length) parts.push(`${new Set(inRange).size} in range ${range!.from}-${range!.to}`);
+  console.log(`▸ ${targets.length} icons to fetch (${parts.join(', ')})`);
+  console.log(`  about ${Math.ceil((targets.length * DELAY_MS * 2) / 60000)} minutes`);
 
   if (targets.length > cap) {
     console.error(

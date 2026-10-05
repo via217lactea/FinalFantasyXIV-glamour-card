@@ -1,37 +1,7 @@
 {
-  "generatedAt": "2026-10-05T02:40:32.652Z",
-  "checked": 18,
+  "generatedAt": "2026-10-05T03:44:39.315Z",
+  "checked": 159,
   "wrong": [
-    {
-      "slot": "ornament",
-      "itemId": 7,
-      "iconId": 8007,
-      "name": "발랄한 체크 우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 13,
-      "iconId": 8011,
-      "name": "전원풍 물방울무늬 우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 19,
-      "iconId": 8019,
-      "name": "디아볼로스 날개"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 2,
-      "iconId": 8002,
-      "name": "하늘색 우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 3,
-      "iconId": 8003,
-      "name": "빨간색 종이우산"
-    },
     {
       "slot": "ornament",
       "itemId": 4,
@@ -40,27 +10,9 @@
     },
     {
       "slot": "ornament",
-      "itemId": 5,
-      "iconId": 8005,
-      "name": "노란색 종이우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 6,
-      "iconId": 8006,
-      "name": "차분한 체크 우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 8,
-      "iconId": 8008,
-      "name": "세련된 체크 우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 9,
-      "iconId": 8013,
-      "name": "천사 날개"
+      "itemId": 7,
+      "iconId": 8007,
+      "name": "발랄한 체크 우산"
     },
     {
       "slot": "ornament",
@@ -70,27 +22,9 @@
     },
     {
       "slot": "ornament",
-      "itemId": 11,
-      "iconId": 8009,
-      "name": "산뜻한 물방울무늬 우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 12,
-      "iconId": 8010,
-      "name": "새침한 물방울무늬 우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 14,
-      "iconId": 8014,
-      "name": "뚱냥이 우산"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 15,
-      "iconId": 8015,
-      "name": "롱카의 물뱀 우산?"
+      "itemId": 13,
+      "iconId": 8011,
+      "name": "전원풍 물방울무늬 우산"
     },
     {
       "slot": "ornament",
@@ -100,15 +34,9 @@
     },
     {
       "slot": "ornament",
-      "itemId": 17,
-      "iconId": 8017,
-      "name": "타락천사 날개"
-    },
-    {
-      "slot": "ornament",
-      "itemId": 18,
-      "iconId": 8018,
-      "name": "대천사 날개"
+      "itemId": 19,
+      "iconId": 8019,
+      "name": "디아볼로스 날개"
     }
   ]
 }
