@@ -6,7 +6,7 @@ import { GearLine, ImageSlot } from './shared.tsx';
 /** Small caps sitting at either end of a hairline, as a masthead does. */
 function RuleLine({ left, right }: { left: string; right?: string }) {
   return (
-    <div className="flex items-baseline justify-between border-b border-fg pb-1 text-[8px] tracking-[0.2em] text-fg uppercase">
+    <div className="flex items-baseline justify-between border-b border-fg pb-1 text-[8px] tracking-[0.2em] whitespace-nowrap text-fg uppercase">
       <span>{left}</span>
       {right && <span>{right}</span>}
     </div>
@@ -31,13 +31,13 @@ function Masthead(p: TemplateProps) {
           </span>
           <p
             style={{ fontFamily: 'var(--font-masthead)', letterSpacing: '-0.01em' }}
-            className="relative text-center text-[52px] leading-[0.8] font-medium text-fg"
+            className="relative text-center text-[52px] leading-[0.8] font-medium whitespace-nowrap text-fg"
           >
             EORZEA
           </p>
         </div>
         <div className="mt-2 border-t border-fg" />
-        <p className="mt-1 text-center text-[9px] tracking-[0.5em] text-fg uppercase">
+        <p className="mt-1 text-center text-[9px] tracking-[0.5em] whitespace-nowrap text-fg uppercase">
           Fashion Collection
         </p>
 

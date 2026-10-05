@@ -20,7 +20,7 @@ function Spread(p: TemplateProps) {
 
         <p
           style={{ fontFamily: 'var(--font-masthead)', letterSpacing: '-0.02em' }}
-          className="mt-3 text-[54px] leading-[0.8] font-medium text-fg"
+          className="mt-3 text-[54px] leading-[0.8] font-medium whitespace-nowrap text-fg"
         >
           EORZEA
         </p>
@@ -47,7 +47,7 @@ function Spread(p: TemplateProps) {
         </div>
 
         <div className="mt-4 flex items-baseline justify-between gap-4">
-          <p className="text-[19px] leading-none font-bold tracking-tight text-fg">
+          <p className="text-[19px] leading-none font-bold tracking-tight whitespace-nowrap text-fg">
             EORZEA FASHION
           </p>
           {/* The ruled box above is set at 7.5px, too small to carry a name, so

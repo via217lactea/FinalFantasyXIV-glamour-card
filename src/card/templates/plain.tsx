@@ -12,7 +12,7 @@ function Plain(p: TemplateProps) {
 
       <div className="relative flex min-w-0 flex-1 flex-col">
         <div className="rule-double mx-7 pt-7 pb-4">
-          <p className="font-display text-[11px] tracking-[0.28em] text-fg-faint uppercase italic">
+          <p className="font-display text-[11px] tracking-[0.28em] whitespace-nowrap text-fg-faint uppercase italic">
             {t(p.cardLang, 'cardEyebrow')}
           </p>
           <h2

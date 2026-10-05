@@ -20,7 +20,7 @@ function Editorial(p: TemplateProps) {
         <div className="flex min-w-0 flex-1 flex-col border-l border-rule/70 pl-6">
           {/* The outfit is what the card is about, so its name leads. The
               model, then the world and job, step down from there. */}
-          <p className="font-display text-[10px] tracking-[0.34em] text-fg-faint uppercase">
+          <p className="font-display text-[10px] tracking-[0.34em] whitespace-nowrap text-fg-faint uppercase">
             {t(p.cardLang, 'collection')}
           </p>
           <p
@@ -80,7 +80,7 @@ function Editorial(p: TemplateProps) {
 
           <div className="mt-3 flex items-end justify-between">
             <div>
-              <p className="font-display text-[13px] tracking-[0.14em] text-fg uppercase">
+              <p className="font-display text-[13px] tracking-[0.14em] whitespace-nowrap text-fg uppercase">
                 Final Fantasy XIV
               </p>
               <p className="mt-1 text-[8.5px] leading-relaxed tracking-wide text-fg-faint">
@@ -89,7 +89,7 @@ function Editorial(p: TemplateProps) {
             </div>
             <div className="text-right">
               <Barcode label={`${p.meta.title}${p.meta.characterName}${p.worn.length}`} />
-              <p className="mt-0.5 font-mono text-[8px] tracking-[0.18em] text-fg-faint">
+              <p className="mt-0.5 font-mono text-[8px] tracking-[0.18em] whitespace-nowrap text-fg-faint">
                 {p.patch ? `PATCH ${p.patch}` : 'GLAMOUR'}
               </p>
             </div>

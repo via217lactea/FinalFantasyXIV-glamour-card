@@ -21,14 +21,17 @@ export function DyeSwatches({ piece, lang }: { piece: WornPiece; lang: Lang }) {
       {piece.dyes.map(
         (stain, i) =>
           stain && (
+            // whitespace-nowrap is load-bearing: the PNG export measures text
+            // slightly differently from the screen, and without it a label that
+            // just fits on one line here breaks across two in the saved image.
             <span
               key={i}
               style={{ fontSize: `${EM.dye}em` }}
-              className="inline-flex items-center gap-[0.4em] rounded-[0.25em] border border-rule px-[0.45em] py-[0.15em] leading-none text-fg-dim"
+              className="inline-flex items-center gap-[0.4em] rounded-[0.25em] border border-rule px-[0.45em] py-[0.15em] leading-none whitespace-nowrap text-fg-dim"
             >
               <span
                 style={{ background: stain.hex }}
-                className="h-[1.05em] w-[1.05em] rounded-[0.15em] border border-[var(--c-swatch-edge)]"
+                className="h-[1.05em] w-[1.05em] shrink-0 rounded-[0.15em] border border-[var(--c-swatch-edge)]"
               />
               {i + 1} - {displayName(stain.name, lang)}
             </span>
@@ -44,7 +47,7 @@ export function DyeText({ piece, lang }: { piece: WornPiece; lang: Lang }) {
   return (
     <p
       style={{ fontSize: `${EM.dye}em` }}
-      className="mt-[0.2em] truncate font-display text-fg-dim"
+      className="mt-[0.2em] truncate font-display whitespace-nowrap text-fg-dim"
     >
       {names.join('  |  ')}
     </p>
