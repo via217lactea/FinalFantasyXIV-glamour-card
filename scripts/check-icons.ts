@@ -7,9 +7,17 @@ import { join } from 'node:path';
  *   npm run check:icons
  *
  * Unlike `build:icons` this needs no client extraction — it compares the
- * catalog against public/icons/. That is what makes patch-day upkeep automatic:
- * refresh the data, see what is newly missing, fill the handful of gaps from the
- * Lodestone. A full extraction is a one-time cost, not a per-patch chore.
+ * catalogue against what is already on hand. That is what makes patch-day
+ * upkeep automatic: refresh the data, see what is newly missing, fill the
+ * handful of gaps from the Lodestone. A full extraction is a one-time cost, not
+ * a per-patch chore.
+ *
+ * What counts as "on hand" depends on where this runs. Locally it is the
+ * extracted icons/ folder. On a runner there is no game client and no icons/,
+ * so it falls back to the committed sprite sheets — which is what actually
+ * deploys, and the only honest answer there. Without that fallback a CI run
+ * would declare every icon missing and write a list that sends a later
+ * fill:icons after twenty thousand of them.
  */
 
 const ICON_DIR = join(process.cwd(), 'icons');
@@ -18,6 +26,18 @@ const DATA_DIR = join(process.cwd(), 'public', 'data');
 function iconRelPath(iconId: number): string {
   const folder = String(Math.floor(iconId / 1000) * 1000).padStart(6, '0');
   return join(folder, `${String(iconId).padStart(6, '0')}.png`);
+}
+
+/** Icon ids already packed into the committed sheets. */
+async function packedIcons(): Promise<Set<number> | null> {
+  try {
+    const manifest = JSON.parse(await readFile(join(DATA_DIR, 'sprites.json'), 'utf8')) as {
+      sheets: { icons: number[] }[];
+    };
+    return new Set(manifest.sheets.flatMap((sheet) => sheet.icons).filter(Boolean));
+  } catch {
+    return null;
+  }
 }
 
 async function main() {
@@ -44,10 +64,20 @@ async function main() {
     }
   }
 
+  const packed = onDisk.size === 0 ? await packedIcons() : null;
+  const source = packed ? 'committed sprites' : 'extracted icons';
+  const have = (iconId: number) =>
+    packed ? packed.has(iconId) : onDisk.has(iconRelPath(iconId));
+
+  if (onDisk.size === 0 && !packed) {
+    console.log('  No icons and no sprites to compare against — nothing to report.');
+    return;
+  }
+
   const missing: number[] = [];
   let affected = 0;
   for (const [iconId, uses] of needed) {
-    if (!onDisk.has(iconRelPath(iconId))) {
+    if (!have(iconId)) {
       missing.push(iconId);
       affected += uses;
     }
@@ -61,10 +91,10 @@ async function main() {
     'utf8',
   );
 
-  const have = needed.size - missing.length;
-  console.log(`  catalog needs : ${needed.size} icons`);
-  console.log(`  on disk       : ${have} (${((have / needed.size) * 100).toFixed(1)}%)`);
-  console.log(`  missing       : ${missing.length}, affecting ${affected} items`);
+  const held = needed.size - missing.length;
+  console.log(`  catalogue needs : ${needed.size} icons`);
+  console.log(`  in ${source.padEnd(13)}: ${held} (${((held / needed.size) * 100).toFixed(1)}%)`);
+  console.log(`  missing         : ${missing.length}, affecting ${affected} items`);
 
   if (missing.length) {
     console.log(`  written to public/data/missing-icons.json`);

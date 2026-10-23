@@ -1,58 +1,62 @@
 name: Refresh game data
 
+# Keeps the item and dye catalogue current with the upstream datamining
+# repositories, and nothing else.
+#
+# Icons are deliberately out of scope. They are extracted from an installed
+# game client, which a runner does not have, and build:sprites rebuilds every
+# sheet from icons/ — so running it here would repack the sheets from an empty
+# folder and wipe all of them. That work stays local; see DEPLOY.md.
+
 on:
   schedule:
-    - cron: '0 18 * * 1'   # Monday 03:00 KST
+    - cron: '0 18 * * 1' # Monday 03:00 KST
   workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
 
-      - name: Rebuild the catalog
+      # Plain install: esbuild and sharp both ship platform binaries as optional
+      # dependencies, and omitting those breaks tsx before anything can run.
+      - name: Install
+        run: npm ci
+
+      - name: Rebuild the catalogue
         run: npm run build:data
 
-      # A patch adds items, and new items arrive without icons. This finds them
-      # without needing a game client on the runner.
       - name: Record patch versions
         run: npm run build:versions
         continue-on-error: true
 
-      - name: Check icon coverage
-        id: icons
+      # With no icons/ on the runner this compares against the committed sprite
+      # sheets, so the number means "what the deployed site is missing". It
+      # writes a list rather than fetching anything.
+      - name: Note any icons the sprites are missing
         run: npm run check:icons
-        continue-on-error: true
-
-      # Only the newly added icons, and only up to the built-in cap. If a patch
-      # adds more than that, the run reports it and a local extraction is due.
-      - name: Fill new icons from the Lodestone
-        if: steps.icons.outcome == 'failure'
-        run: npm run fill:icons
-        continue-on-error: true
-
-      # New icons mean the sheets are stale. Only possible when the fill step
-      # actually produced files; a runner has no game client to extract from.
-      - name: Repack sprite sheets
-        if: steps.icons.outcome == 'failure'
-        run: npm run build:sprites
         continue-on-error: true
 
       - name: Open a PR if anything changed
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: 'chore(data): refresh catalog and icons'
+          commit-message: 'chore(data): refresh catalogue'
           branch: data/refresh
-          title: 'chore(data): refresh catalog and icons'
+          title: 'chore(data): refresh catalogue'
           body: |
             Regenerated from the upstream datamining repositories.
-            New icons, if any, were pulled for the added items only.
-          add-paths: |
-            public/data
-            public/sprites
+
+            Icons are not touched here — they come from a local game client.
+            If `public/data/missing-icons.json` grew, run the icon steps in
+            DEPLOY.md locally and push the new sprites.
+          add-paths: public/data

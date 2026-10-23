@@ -81,8 +81,12 @@ npm run build:sprites    # 시트 다시 굽기
 git add . && git commit -m "patch 7.x" && git push
 ```
 
-주간 워크플로(`.github/workflows/refresh-data.yml`)가 앞 세 단계를 자동으로 돌려 PR을
-연다. 스프라이트 재생성은 아이콘 원본이 로컬에만 있으므로 직접 해야 한다.
+주간 워크플로(`.github/workflows/refresh-data.yml`)는 **카탈로그 갱신만** 하고 PR을 연다.
+아이콘은 건드리지 않는다 — 추출에 게임 클라이언트가 필요하고, `build:sprites`는 `icons/`
+전체를 다시 포장하므로 러너에서 돌리면 **빈 폴더로 시트를 덮어써 아이콘을 전부 날린다.**
+
+PR이 열리면 `public/data/missing-icons.json`을 확인한다. 거기 수가 늘었다면 위 네 단계를
+로컬에서 돌려 새 스프라이트를 올리면 된다.
 
 ## 파일 수가 다시 늘면
 
