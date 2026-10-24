@@ -84,6 +84,21 @@ async function main() {
   }
   missing.sort((a, b) => a - b);
 
+  // Earlier versions of fill:icons resolved facewear and ornament ids against
+  // the Lodestone's item map, which they do not belong to, and wrote whatever
+  // unrelated item that landed on. Flag those so they can be re-extracted.
+  const suspect: number[] = [];
+  for (const slot of ['facewear', 'ornament']) {
+    try {
+      const { items } = JSON.parse(
+        await readFile(join(DATA_DIR, 'items', `${slot}.json`), 'utf8'),
+      ) as { items: [number, number, ...unknown[]][] };
+      for (const [, icon] of items) if (have(icon)) suspect.push(icon);
+    } catch {
+      // slot not present
+    }
+  }
+
   const manifest = join(DATA_DIR, 'missing-icons.json');
   await writeFile(
     manifest,
@@ -99,6 +114,13 @@ async function main() {
   if (missing.length) {
     console.log(`  written to public/data/missing-icons.json`);
     console.log(`  fill the gap with: npm run fill:icons`);
+  }
+  if (suspect.length) {
+    console.log(
+      `\n  note: ${suspect.length} facewear/ornament icons cannot be checked or\n` +
+        '  fetched from the Lodestone — their ids belong to their own sheets, not\n' +
+        '  the item map. They must come from a game client extraction.',
+    );
   }
 
   // Non-zero exit lets CI decide whether a fill step is worth running.

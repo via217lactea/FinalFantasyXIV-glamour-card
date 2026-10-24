@@ -30,6 +30,15 @@ const USER_AGENT = 'ff14-glamour-card icon audit (sampling)';
 const OG_IMAGE = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i;
 const DELAY_MS = 1200;
 
+/**
+ * Facewear and fashion accessories come from the Glasses and Ornament sheets,
+ * whose ids are row numbers in those sheets — 1, 2, 3 — not Item ids. Looking
+ * one up in the Lodestone's item map therefore lands on a completely unrelated
+ * item, and silently fetches its picture. Those slots have to be left alone.
+ */
+const SHEET_SLOTS = new Set(['facewear', 'ornament']);
+
+
 /** Mean per-channel difference above which two icons are different pictures. */
 const DIFFERENT = 28;
 
@@ -102,6 +111,10 @@ async function main() {
     const src = sourcePath(entry.iconId);
     if (!(await exists(src))) {
       skipped.push(`${entry.name}: no extracted icon`);
+      continue;
+    }
+    if (SHEET_SLOTS.has(entry.slot)) {
+      skipped.push(`${entry.name}: ${entry.slot} ids are not Item ids`);
       continue;
     }
     const lodestoneId = idMap[entry.itemId - 1]?.trim();

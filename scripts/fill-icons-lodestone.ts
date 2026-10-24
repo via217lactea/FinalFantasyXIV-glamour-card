@@ -29,6 +29,15 @@ const ID_MAP_URL =
 /** Above this, use a client extraction instead. Override only if you mean it. */
 const DEFAULT_CAP = 800;
 const DELAY_MS = 1200;
+
+/**
+ * Facewear and fashion accessories come from the Glasses and Ornament sheets,
+ * whose ids are row numbers in those sheets — 1, 2, 3 — not Item ids. Looking
+ * one up in the Lodestone's item map therefore lands on a completely unrelated
+ * item, and silently fetches its picture. Those slots have to be left alone.
+ */
+const SHEET_SLOTS = new Set(['facewear', 'ornament']);
+
 const USER_AGENT = 'ff14-glamour-card icon gap filler (contact: your-email@example.com)';
 
 const OUT_DIR = join(process.cwd(), 'icons');
@@ -59,17 +68,21 @@ async function loadIdMap(): Promise<string[]> {
   return (await res.text()).split('\n');
 }
 
-/** Which item ids use each missing icon, so we know what page to open. */
-async function itemsByIcon(missing: Set<number>): Promise<Map<number, number[]>> {
-  const { readdir } = await import('node:fs/promises');
+/**
+ * Which item ids use each wanted icon, so we know what page to open.
+ *
+ * Sheet-based slots are skipped: their ids would resolve to unrelated items.
+ */
+async function itemsByIcon(wanted: Set<number>): Promise<Map<number, number[]>> {
   const out = new Map<number, number[]>();
   for (const file of await readdir(join(DATA_DIR, 'items'))) {
     if (!file.endsWith('.json')) continue;
+    if (SHEET_SLOTS.has(file.replace('.json', ''))) continue;
     const { items } = JSON.parse(
       await readFile(join(DATA_DIR, 'items', file), 'utf8'),
     ) as { items: [number, number, ...unknown[]][] };
     for (const [itemId, iconId] of items) {
-      if (!missing.has(iconId)) continue;
+      if (!wanted.has(iconId)) continue;
       const list = out.get(iconId) ?? [];
       list.push(itemId);
       out.set(iconId, list);
@@ -164,6 +177,8 @@ async function main() {
       .slice(0, 3);
 
     if (!candidates.length) {
+      // Either no Lodestone entry, or the only items using this icon are in a
+      // sheet-based slot and cannot be looked up at all.
       noMapping++;
       continue;
     }
