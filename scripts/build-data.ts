@@ -163,6 +163,27 @@ async function main() {
   console.log('▸ merging facewear and fashion accessories…');
   const extraSlots: Record<string, Packed[]> = { facewear: [], ornament: [] };
 
+  /**
+   * Real icons on these sheets start in the thousands. A low id is the sheet's
+   * placeholder for an entry that has no art of its own — four of the glasses
+   * illusions share 786 — and extracting it yields whatever unrelated picture
+   * sits at that number in the client. Dropping it lets the slot's own
+   * placeholder show, which at least does not claim to be the item.
+   */
+  const PLACEHOLDER_BELOW = 8000;
+
+  /**
+   * The Ornament sheet stores its Icon column 50,000 below the real icon id —
+   * its 8001 is the game's 58001. Checked against the Item sheet by name: every
+   * ornament that has a matching item agrees on the offset, 52 of 52. Taking
+   * the column at face value points each fashion accessory at an unrelated
+   * low-numbered icon, which is exactly what it looked like.
+   *
+   * The Glasses sheet needs no such adjustment; its ids are already the real
+   * ones in the 200000 block.
+   */
+  const ICON_OFFSET: Record<string, number> = { ornament: 50000 };
+
   for (const [slot, sheetName, nameColumn] of [
     ['facewear', 'Glasses', 'Name'],
     ['ornament', 'Ornament', 'Singular'],
@@ -174,8 +195,10 @@ async function main() {
     }
     for (const [id, row] of sheet.en.rows) {
       const nameEn = row.str(nameColumn);
-      const iconId = row.int('Icon');
-      if (!nameEn || !iconId) continue;
+      const rawIcon = row.int('Icon');
+      if (!nameEn || !rawIcon) continue;
+      const iconId =
+        rawIcon < PLACEHOLDER_BELOW ? 0 : rawIcon + (ICON_OFFSET[slot] ?? 0);
       extraSlots[slot].push([
         id,
         iconId,
@@ -191,7 +214,11 @@ async function main() {
     }
     extraSlots[slot].sort((a, b) => a[0] - b[0]);
     const noKo = extraSlots[slot].filter((r) => !r[9]).length;
-    console.log(`  ${slot}: ${extraSlots[slot].length} entries, ${noKo} without a Korean name`);
+    const placeholder = extraSlots[slot].filter((r) => !r[1]).length;
+    console.log(
+      `  ${slot}: ${extraSlots[slot].length} entries, ${noKo} without a Korean name` +
+        (placeholder ? `, ${placeholder} with no icon of their own` : ''),
+    );
   }
 
   // ---- categories --------------------------------------------------------

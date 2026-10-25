@@ -84,6 +84,25 @@ async function main() {
   }
   missing.sort((a, b) => a - b);
 
+  // The Ornament sheet stores Icon 50,000 low; build-data corrects it. If that
+  // correction is ever lost the ids land back in the 8000s, where the client
+  // holds unrelated art — a wrong picture rather than a missing one, which
+  // nothing else would flag.
+  try {
+    const { items } = JSON.parse(
+      await readFile(join(DATA_DIR, 'items', 'ornament.json'), 'utf8'),
+    ) as { items: [number, number, ...unknown[]][] };
+    const low = items.filter(([, icon]) => icon > 0 && icon < 50000);
+    if (low.length) {
+      console.log(
+        `\n  ! ${low.length} ornament icons are below 50000 — the sheet's offset\n` +
+          '    correction is missing; re-run build:data.',
+      );
+    }
+  } catch {
+    // slot not present
+  }
+
   // Earlier versions of fill:icons resolved facewear and ornament ids against
   // the Lodestone's item map, which they do not belong to, and wrote whatever
   // unrelated item that landed on. Flag those so they can be re-extracted.
