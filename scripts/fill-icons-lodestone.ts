@@ -40,7 +40,14 @@ const SHEET_SLOTS = new Set(['facewear', 'ornament']);
 
 const USER_AGENT = 'ff14-glamour-card icon gap filler (contact: your-email@example.com)';
 
-const OUT_DIR = join(process.cwd(), 'icons');
+/**
+ * Kept apart from icons/, which build:icons overwrites wholesale from a client
+ * extraction. Anything fetched here is a deliberate correction — an icon the
+ * installed client either lacks or holds different art for — and putting it in
+ * the same folder meant every re-extraction silently threw those corrections
+ * away. collect-icons reads this folder last, so it wins.
+ */
+const OUT_DIR = join(process.cwd(), 'icons-lodestone');
 const DATA_DIR = join(process.cwd(), 'public', 'data');
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

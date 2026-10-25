@@ -46,6 +46,16 @@ function rank(relativeDir: string, hr: boolean): number {
   return (nested ? 0 : 2) + (hr ? 1 : 0);
 }
 
+/**
+ * Corrections fetched by fill:icons, which outrank anything from the client.
+ *
+ * They exist precisely because the client is wrong or incomplete for those ids,
+ * so a re-extraction must not undo them. Before this folder existed both wrote
+ * to icons/ and every build:icons quietly reverted the fixes.
+ */
+const OVERRIDE_DIR = join(process.cwd(), 'icons-lodestone');
+const OVERRIDE_SCORE = 10;
+
 async function walk(
   dir: string,
   found: Map<number, Candidate>,
@@ -76,7 +86,9 @@ async function walk(
     if (!match) continue;
 
     const id = Number(match[1]);
-    const score = rank(nesting, Boolean(match[2]));
+    const score = dir.startsWith(OVERRIDE_DIR)
+      ? OVERRIDE_SCORE
+      : rank(nesting, Boolean(match[2]));
     const existing = found.get(id);
     if (!existing || score > existing.score) found.set(id, { path: full, score });
   }
@@ -121,7 +133,18 @@ async function main() {
   console.log('▸ scanning source…');
   const available = new Map<number, Candidate>();
   await walk(source, available);
-  console.log(`  ${available.size} icon files found`);
+  const fromClient = available.size;
+
+  // Applied after the extraction so corrections take precedence over it.
+  await walk(OVERRIDE_DIR, available);
+  let overrides = 0;
+  for (const candidate of available.values()) {
+    if (candidate.path.startsWith(OVERRIDE_DIR)) overrides++;
+  }
+  console.log(
+    `  ${fromClient} icon files found` +
+      (overrides ? `, plus ${overrides} corrections in icons-lodestone` : ''),
+  );
 
   console.log('▸ copying…');
   let copied = 0;
@@ -145,7 +168,8 @@ async function main() {
 
   console.log(
     `  copied ${copied} (${hrCount} high-res` +
-      (nested ? `, ${nested} only available in a variant folder` : '') +
+      (nested ? `, ${nested} only in a variant folder` : '') +
+      (overrides ? `, ${overrides} corrected from icons-lodestone` : '') +
       ')',
   );
 
